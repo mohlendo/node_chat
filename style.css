@@ -3,12 +3,12 @@ body {
   margin: 0;
 }
 body, #entry {
-  background: #111;
-  color: #ccc;
+  background: #22252a;
+  color: #eee;
 }
 body, table {
-  font-family: DejaVu Sans Mono, fixed;
-  font-size: 12pt;
+  font-family: DejaVu Sans Mono, fixed; 
+  font-size: 14pt;
 }
 tr,td,table {
   padding: 0;
@@ -75,7 +75,7 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
   color: #fff;
   width: 100%; 
   bottom: 0;
-  background: #223;
+  background: #733;
 }
 
 #entry {

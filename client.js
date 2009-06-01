@@ -224,7 +224,7 @@ $(document).ready(function() {
            , data: { nick: nick }
            , error: function () {
                alert("error connecting to server");
-               $("#loading").hide();
+               showConnect();
              }
            , success: onConnect
            });

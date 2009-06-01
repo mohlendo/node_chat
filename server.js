@@ -1,6 +1,7 @@
 var fu = require("fu");
 
 var MESSAGE_BACKLOG = 200;
+var SESSION_TIMEOUT = 60 * 1000;
 
 
 var channel = new function () {
@@ -16,8 +17,7 @@ var channel = new function () {
     messages.push( m );
 
     while (callbacks.length > 0) {
-      var callback = callbacks.shift();   
-      callback([m]);
+      callbacks.shift().callback([m]);
     }
 
     while (messages.length > MESSAGE_BACKLOG)
@@ -35,11 +35,19 @@ var channel = new function () {
     if (matching.length != 0) {
       callback(matching);
     } else {
-      callbacks.push(callback);
+      callbacks.push({ timestamp: new Date(), callback: callback });
     }
   };
+
+  // clear old callbacks
+  // they can hang around for at most 30 seconds.
+  setInterval(function () {
+    var now = new Date();
+    while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000) {
+      callbacks.shift().callback([]);
+    }
+  }, 1000);
 };
-    
 
 var sessions = {};
 
@@ -49,13 +57,29 @@ function createSession (nick) {
     if (session && session.nick === nick)
       return null;
   }
-
   var session = { nick: nick 
-                , id: Math.floor(Math.random()*99999999999)
+                , id: Math.floor(Math.random()*99999999999).toString()
+                , timestamp: new Date()
                 };
+  session.poke = function () {
+    session.timestamp = new Date();
+  }
   sessions[session.id] = session;
   return session;
 }
+
+// interval to kill off old sessions
+setInterval(function () {
+  var now = new Date();
+  for (var id in sessions) {
+    if (!sessions.hasOwnProperty(id)) continue;
+    var session = sessions[id];
+
+    if (now - session.timestamp > SESSION_TIMEOUT) {
+      delete sessions[id];
+    }
+  }
+}, 1000);
 
 function onLoad () {
   fu.listen(7000);
@@ -86,9 +110,17 @@ function onLoad () {
       res.simpleJSON(400, { error: "Must supply since parameter" });
       return;
     }
+    var id = req.uri.params.id;
+    var session;
+    if (id && sessions[id]) {
+      session = sessions[id];
+      session.poke();
+    }
+
     var since = parseInt(req.uri.params.since, 10);
 
     channel.query(since, function (messages) {
+      if (session) session.poke();
       res.simpleJSON(200, { messages: messages });
     });
   });
@@ -102,6 +134,8 @@ function onLoad () {
       res.simpleJSON(400, { error: "No such session id" });
       return; 
     }
+
+    session.poke();
 
     channel.appendMessage(session.nick, text);
     res.simpleJSON(200, {});
