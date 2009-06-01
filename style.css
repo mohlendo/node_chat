@@ -1,0 +1,132 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+body, #entry {
+  background: #111;
+  color: #ccc;
+}
+body, table {
+  font-family: DejaVu Sans Mono, fixed;
+  font-size: 12pt;
+}
+tr,td,table {
+  padding: 0;
+  margin: 0;
+  outline-width: 0;
+  border-width: 0;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0
+}
+
+
+a { text-decoration: none; color: #888; }
+a:hover { text-decoration: underline; color: #aaa; }
+
+#loading, #connect {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 1em;
+}
+
+#loading { z-index: 10000000; }
+#connect { z-index: 10000001; }
+
+#loading p, #connect fieldset  {
+  margin: 5em auto;
+  width: 20em;
+}
+
+/* Here's our form stuff */
+ fieldset, form, label, legend
+{border: 0; margin: 0; outline: 0; padding: 0; background: transparent; vertical-align: baseline;}
+
+form .field, form .buttons {clear: both; margin: 0 0 1.5em;}
+form .field label {display: block;}
+form ul.fields {margin: 0 0 1.5em; padding: 0;}
+form ul.fields li {list-style-type: none; margin: 0;}
+form ul.inline li, form ul.inline label {display: inline;}
+form ul.inline li {padding: 0 .75em 0 0;}
+
+input.radio, input.checkbox {vertical-align: top;}
+label, button, input.submit, input.image {cursor: pointer;}
+* html input.radio, * html input.checkbox {vertical-align: middle;} /* ie6 */
+*+html input.radio, *+html input.checkbox {vertical-align: middle;} /* ie7 */
+
+textarea {overflow: auto;}
+input.text, input.password, textarea, select {margin: 0; vertical-align: baseline;}
+input.text, input.password, textarea {border: 1px solid #444; padding: 2px;}
+input.text, input.password, textarea {
+  background: #aaa;
+}
+
+/* horizontal layout */
+form.horizontal .field {padding-left: 150px;}
+form.horizontal .field label {display: inline; float: left; width: 140px; margin-left: -150px;}
+
+
+#toolbar {
+  position: fixed;
+  color: #fff;
+  width: 100%; 
+  bottom: 0;
+  background: #223;
+}
+
+#entry {
+  width: 100%;
+  font-size: inherit;
+  padding: 1em;
+  margin: 0;
+  border-width: 0;
+  clear: both;
+}
+
+#log {
+  display: block;
+  /* enough padding to clear the toolbar.. is there a better way to do this? */
+  padding-bottom: 5.1em; 
+  background: inherit;
+  overflow: hidden;
+}
+
+/* not very important info */
+.rename td, .join td, .part td, .message .date { color: #444; }
+
+.message {
+  margin: 0.1em 0;
+}
+
+.message td {
+  vertical-align: top;
+}
+
+.nick { 
+  font-weight: bold;
+  padding: 0 1em 0 0.5em;
+}
+.nick a {
+  color: inherit;
+}
+
+
+#toolbar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#toolbar li {
+  display: block; 
+  float: left;
+  margin: 0 0.5em;
+}
+
+/* personal messages are highlighted yellow */
+.personal .nick { color: #ff5; }
+
