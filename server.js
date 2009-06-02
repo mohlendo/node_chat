@@ -53,6 +53,9 @@ var channel = new function () {
 var sessions = {};
 
 function createSession (nick) {
+  if (nick.length > 50) return null;
+  if (/[^\w_\-^!]/.exec(nick)) return null;
+
   for (var i in sessions) {
     var session = sessions[i];
     if (session && session.nick === nick) return null;
@@ -70,6 +73,7 @@ function createSession (nick) {
     },
 
     destroy: function () {
+      channel.appendMessage(session.nick, "part");
       delete sessions[session.id];
     }
   };
@@ -100,6 +104,17 @@ function onLoad () {
   fu.get("/client.js", fu.staticHandler("client.js"));
   fu.get("/jquery-1.2.6.min.js", fu.staticHandler("jquery-1.2.6.min.js"));
 
+
+  fu.get("/who", function (req, res) {
+    var nicks = [];
+    for (var id in sessions) {
+      if (!sessions.hasOwnProperty(id)) continue;
+      var session = sessions[id];
+      nicks.push(session.nick);
+    }
+    res.simpleJSON(200, { nicks: nicks });
+  });
+
   fu.get("/join", function (req, res) {
     var nick = req.uri.params["nick"];
     if (nick == null || nick.length == 0) {
@@ -120,7 +135,6 @@ function onLoad () {
     var session;
     if (id && sessions[id]) {
       session = sessions[id];
-      channel.appendMessage(session.nick, "part");
       session.destroy();
     }
     res.simpleJSON(200, { });

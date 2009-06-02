@@ -4,6 +4,25 @@ var CONFIG = { debug: false
              , last_message_time: 0
              };
 
+var nicks = [];
+
+function userJoin(nick, timestamp) {
+  addMessage(nick, "joined", timestamp, "join");
+  for (var i = 0; i < nicks.length; i++)
+    if (nicks[i] == nick) return;
+  nicks.push(nick);
+}
+
+function userPart(nick, timestamp) {
+  addMessage(nick, "left", timestamp, "part");
+  for (var i = 0; i < nicks.length; i++) {
+    if (nicks[i] == nick) {
+      nicks.splice(i,1)
+      return;
+    }
+  }
+}
+
 // utility functions
 
 util = {
@@ -158,11 +177,11 @@ function longPoll (data) {
             break;
 
           case "join":
-            addMessage(message.nick, "joined", message.timestamp, "join");
+            userJoin(message.nick, message.timestamp);
             break;
 
           case "part":
-            addMessage(message.nick, "left", message.timestamp, "part");
+            userPart(message.nick, message.timestamp);
             break;
         }
       }
@@ -233,9 +252,16 @@ function onConnect (session) {
   showChat(CONFIG.nick);
 }
 
-$(window).unload(function () {
-  jQuery.get("/part", {id: CONFIG.id}, function (data) { }, "json");
-});
+function who (callback) {
+  jQuery.get("/who", {}, function (data, status) {
+    if (status != "success") return;
+    nicks = data.nicks;
+    var nick_string = nicks.length > 0 ? nicks.join(", ") : "(none)";
+
+    addMessage("users:", nick_string, new Date(), "notice");
+    if (callback) callback();
+  }, "json");
+}
 
 $(document).ready(function() {
 
@@ -245,6 +271,19 @@ $(document).ready(function() {
     $("#loading").show();
     showLoad();
     var nick = $("#nickInput").attr("value");
+
+    if (nick.length > 50) {
+      alert("Nick too long. 50 character max.");
+      showConnect();
+      return false;
+    }
+
+    if (/[^\w_\-^!]/.exec(nick)) {
+      alert("Bad character in nick. Can only have letters, numbers, and '_', '-', '^', '!'");
+      showConnect();
+      return false;
+    }
+
     $.ajax({ cache: false
            , type: "GET" // XXX should be POST
            , dataType: "json"
@@ -275,7 +314,11 @@ $(document).ready(function() {
   // remove fixtures
   $("#log table").remove();
 
-  longPoll();
+  who(longPoll);
 
   showConnect();
+});
+
+$(window).unload(function () {
+  jQuery.get("/part", {id: CONFIG.id}, function (data) { }, "json");
 });
