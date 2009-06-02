@@ -26,6 +26,7 @@ a { text-decoration: none; color: #888; }
 a:hover { text-decoration: underline; color: #aaa; }
 
 #loading, #connect {
+  background: url(/bg.png);
   position: fixed;
   top: 0;
   left: 0;
