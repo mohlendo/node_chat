@@ -59,7 +59,12 @@ fu.staticHandler = function (filename) {
   var content_type = fu.mime.lookupExtension(extname(filename));
   var encoding = (content_type.slice(0,4) === "text" ? "utf8" : "raw");
 
-  function loadResponseData( ) {
+  function loadResponseData(callback) {
+    if (body && headers && !DEBUG) {
+      callback();
+      return;
+    }
+
     node.fs.cat(filename, encoding, function (status, data) {
       if (status != 0) return notFound;
 
@@ -71,16 +76,16 @@ fu.staticHandler = function (filename) {
         headers.push(["Cache-Control", "public"]);
        
       puts("static file " + filename + " loaded");
+      callback();
     });
   }
-  loadResponseData();
 
   return function (req, res) {
-    if (DEBUG)
-      loadResponseData();
-    res.sendHeader(200, headers);
-    res.sendBody(body);
-    res.finish();
+    loadResponseData(function () {
+      res.sendHeader(200, headers);
+      res.sendBody(body);
+      res.finish();
+    });
   }
 };
 
