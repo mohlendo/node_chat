@@ -98,6 +98,8 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
 
 /* not very important info */
 .notice td, .join td, .part td, .message .date { color: #555; }
+.notice .nick { color: #cd5; }
+.error td { color: #933; }
 
 .message {
   margin: 0.1em 0;

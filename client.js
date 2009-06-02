@@ -154,7 +154,6 @@ function handleKeyPress (e) {
   if (e.keyCode != 13 /* Return */) return;
 
   if (!util.isBlank(msg)) {
-    //addMessage(CONFIG.nick, msg);
     send(msg);
   }
 
@@ -162,7 +161,14 @@ function handleKeyPress (e) {
   clearEntry();
 };
 
+var longPollErrors = 0;
 function longPoll (data) {
+
+  if (longPollErrors > 2) {
+    showConnect();
+    return;
+  }
+
   if (data) {
     if (data.messages) {
       for (var i = 0; i < data.messages.length; i++) {
@@ -194,16 +200,13 @@ function longPoll (data) {
          , dataType: "json"
          , data: { since: CONFIG.last_message_time, id: CONFIG.id }
          , error: function () {
-             console.log("long poll error! waiting 5 seconds");
-             setTimeout(longPoll, 5000);
+             addMessage("", "long poll error. trying again...", new Date(), "error");
+             longPollErrors += 1;
+             setTimeout(longPoll, 10*1000);
            }
-         , success: function (data, textStatus) {
-             if (textStatus == "success") {
-               longPoll(data);
-             } else {
-               console.log("long poll error: " + textStatus);
-               setTimeout(longPoll, 5000);
-             }
+         , success: function (data) {
+             longPollErrors = 0;
+             longPoll(data);
            }
          });
 }
