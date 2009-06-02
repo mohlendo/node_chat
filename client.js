@@ -143,7 +143,19 @@ function longPoll (data) {
         if (message.timestamp > CONFIG.last_message_time)
           CONFIG.last_message_time = message.timestamp;
 
-        addMessage(message.nick, message.text);
+        switch (message.type) {
+          case "msg":
+            addMessage(message.nick, message.text, message.timestamp);
+            break;
+
+          case "join":
+            addMessage(message.nick, "joined", message.timestamp, "join");
+            break;
+
+          case "part":
+            addMessage(message.nick, "left", message.timestamp, "part");
+            break;
+        }
       }
     }
   }
@@ -188,11 +200,14 @@ function showLoad () {
   $("#toolbar").hide();
 }
 
-function showChat () {
-  $("#connect").hide();
-  $("#loading").hide();
+function showChat (nick) {
+  $("#nick").text(nick);
   $("#toolbar").show();
   $("#entry").focus();
+
+  $("#connect").hide();
+  $("#loading").hide();
+
   scrollDown();
 }
 
@@ -206,8 +221,12 @@ function onConnect (session) {
   CONFIG.nick = session.nick;
   CONFIG.id   = session.id;
 
-  showChat();
+  showChat(CONFIG.nick);
 }
+
+$(window).unload(function () {
+  jQuery.get("/part", {id: CONFIG.id}, function (data) { }, "json");
+});
 
 $(document).ready(function() {
 
@@ -220,7 +239,7 @@ $(document).ready(function() {
     $.ajax({ cache: false
            , type: "GET" // XXX should be POST
            , dataType: "json"
-           , url: "/connect"
+           , url: "/join"
            , data: { nick: nick }
            , error: function () {
                alert("error connecting to server");

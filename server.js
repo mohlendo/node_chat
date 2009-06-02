@@ -8,9 +8,10 @@ var channel = new function () {
   var messages = [];
   var callbacks = [];
 
-  this.appendMessage = function (nick, message) {
+  this.appendMessage = function (nick, type, text) {
     var m = { nick: nick
-            , text: message
+            , type: type // "msg", "join", "part"
+            , text: text
             , timestamp: (new Date()).getTime()
             };
 
@@ -54,16 +55,25 @@ var sessions = {};
 function createSession (nick) {
   for (var i in sessions) {
     var session = sessions[i];
-    if (session && session.nick === nick)
-      return null;
+    if (session && session.nick === nick) return null;
   }
-  var session = { nick: nick 
-                , id: Math.floor(Math.random()*99999999999).toString()
-                , timestamp: new Date()
-                };
-  session.poke = function () {
-    session.timestamp = new Date();
-  }
+
+  var session = { 
+    nick: nick, 
+
+    id: Math.floor(Math.random()*99999999999).toString(),
+
+    timestamp: new Date(),
+
+    poke: function () {
+      session.timestamp = new Date();
+    },
+
+    destroy: function () {
+      delete sessions[session.id];
+    }
+  };
+
   sessions[session.id] = session;
   return session;
 }
@@ -76,7 +86,7 @@ setInterval(function () {
     var session = sessions[id];
 
     if (now - session.timestamp > SESSION_TIMEOUT) {
-      delete sessions[id];
+      session.destroy();
     }
   }
 }, 1000);
@@ -89,20 +99,30 @@ function onLoad () {
   fu.get("/client.js", fu.staticHandler("client.js"));
   fu.get("/jquery-1.2.6.min.js", fu.staticHandler("jquery-1.2.6.min.js"));
 
-  fu.get("/connect", function (req, res) {
+  fu.get("/join", function (req, res) {
     var nick = req.uri.params["nick"];
     if (nick == null || nick.length == 0) {
       res.simpleJSON(400, {error: "Bad nick."});
       return;
     }
-
     var session = createSession(nick);
     if (session == null) {
       res.simpleJSON(400, {error: "Nick in use"});
       return;
     }
-
+    channel.appendMessage(session.nick, "join");
     res.simpleJSON(200, { id: session.id, nick: session.nick});
+  });
+
+  fu.get("/part", function (req, res) {
+    var id = req.uri.params.id;
+    var session;
+    if (id && sessions[id]) {
+      session = sessions[id];
+      channel.appendMessage(session.nick, "part");
+      session.destroy();
+    }
+    res.simpleJSON(200, { });
   });
 
   fu.get("/recv", function (req, res) {
@@ -137,7 +157,7 @@ function onLoad () {
 
     session.poke();
 
-    channel.appendMessage(session.nick, text);
+    channel.appendMessage(session.nick, "msg", text);
     res.simpleJSON(200, {});
   });
 }
