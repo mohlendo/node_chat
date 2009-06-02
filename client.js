@@ -40,29 +40,38 @@ function scrollDown () {
   $("#entry").focus();
 }
 
-function addMessage (from, message, time, _class) {
-  if (message === null)
+function addMessage (from, text, time, _class) {
+  if (text === null)
     return;
   
   if (time !== null)
     time = new Date();
 
-  message = util.toStaticHTML(message); // first sanitize
-  message = message.replace(util.urlRE, '<a target="_blank" href="$&">$&</a>');
-
   var messageElement = $(document.createElement("table"));
 
-  messageElement.addClass("message");
+  messageElement.addClass("text");
   if (_class)
     messageElement.addClass(_class);
+
+  // sanitize
+  text = util.toStaticHTML(text);
+
+  // See if it matches our nick?
+  var nick_re = new RegExp(CONFIG.nick);
+  if (nick_re.exec(text))
+    messageElement.addClass("personal");
+
+  // replace URLs with links
+  text = text.replace(util.urlRE, '<a target="_blank" href="$&">$&</a>');
 
   var content = '<tr>'
               + '  <td class="date">' + util.timeString(time) + '</td>'
               + '  <td class="nick">' + util.toStaticHTML(from) + '</td>'
-              + '  <td class="msg-text">' + message  + '</td>'
+              + '  <td class="msg-text">' + text  + '</td>'
               + '</tr>'
               ;
   messageElement.html(content);
+
   $("#log").append(messageElement);
   scrollDown();
 }

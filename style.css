@@ -97,7 +97,7 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
 }
 
 /* not very important info */
-.rename td, .join td, .part td, .message .date { color: #444; }
+.rename td, .join td, .part td, .message .date { color: #555; }
 
 .message {
   margin: 0.1em 0;
