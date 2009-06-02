@@ -95,8 +95,13 @@ function addMessage (from, text, time, _class) {
   scrollDown();
 }
 
-function matchingNicks () {
-  return [];
+function matchingNicks (partial) {
+  var re = new RegExp(partial);
+  var matching = [];
+  for (var i = 0; i < nicks.length; i++) {
+    if (re.exec(nicks[i])) matching.push(nicks[i]);
+  }
+  return matching;
 }
 
 function clearEntry () {
