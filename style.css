@@ -9,6 +9,7 @@ body, #entry {
 body, table {
   font-family: DejaVu Sans Mono, fixed; 
   font-size: 14pt;
+  line-height: 150%;
 }
 tr,td,table {
   padding: 0;
@@ -98,8 +99,8 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
 
 /* not very important info */
 .notice td, .join td, .part td, .message .date { color: #555; }
-.notice .nick { color: #cd5; }
 .error td { color: #933; }
+.personal .nick, .notice .nick { color: #cd5; }
 
 .message {
   margin: 0.1em 0;
@@ -129,7 +130,4 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
   float: left;
   margin: 0 0.5em;
 }
-
-/* personal messages are highlighted yellow */
-.personal .nick { color: #ff5; }
 

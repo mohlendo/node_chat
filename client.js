@@ -68,7 +68,7 @@ function addMessage (from, text, time, _class) {
 
   var messageElement = $(document.createElement("table"));
 
-  messageElement.addClass("text");
+  messageElement.addClass("message");
   if (_class)
     messageElement.addClass(_class);
 
