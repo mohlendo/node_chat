@@ -166,36 +166,39 @@ function handleKeyPress (e) {
   clearEntry();
 };
 
-var longPollErrors = 0;
-function longPoll (data) {
+var transmission_errors = 0;
+var first_poll = true;
 
-  if (longPollErrors > 2) {
+function longPoll (data) {
+  if (transmission_errors > 2) {
     showConnect();
     return;
   }
 
-  if (data) {
-    if (data.messages) {
-      for (var i = 0; i < data.messages.length; i++) {
-        var message = data.messages[i];
+  if (data && data.messages) {
+    for (var i = 0; i < data.messages.length; i++) {
+      var message = data.messages[i];
 
-        if (message.timestamp > CONFIG.last_message_time)
-          CONFIG.last_message_time = message.timestamp;
+      if (message.timestamp > CONFIG.last_message_time)
+        CONFIG.last_message_time = message.timestamp;
 
-        switch (message.type) {
-          case "msg":
-            addMessage(message.nick, message.text, message.timestamp);
-            break;
+      switch (message.type) {
+        case "msg":
+          addMessage(message.nick, message.text, message.timestamp);
+          break;
 
-          case "join":
-            userJoin(message.nick, message.timestamp);
-            break;
+        case "join":
+          userJoin(message.nick, message.timestamp);
+          break;
 
-          case "part":
-            userPart(message.nick, message.timestamp);
-            break;
-        }
+        case "part":
+          userPart(message.nick, message.timestamp);
+          break;
       }
+    }
+    if (first_poll) {
+      first_poll = false;
+      who();
     }
   }
 
@@ -206,11 +209,11 @@ function longPoll (data) {
          , data: { since: CONFIG.last_message_time, id: CONFIG.id }
          , error: function () {
              addMessage("", "long poll error. trying again...", new Date(), "error");
-             longPollErrors += 1;
+             transmission_errors += 1;
              setTimeout(longPoll, 10*1000);
            }
          , success: function (data) {
-             longPollErrors = 0;
+             transmission_errors = 0;
              longPoll(data);
            }
          });
@@ -321,7 +324,7 @@ $(document).ready(function() {
   // remove fixtures
   $("#log table").remove();
 
-  who(longPoll);
+  longPoll();
 
   showConnect();
 });

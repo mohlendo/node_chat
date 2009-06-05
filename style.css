@@ -45,7 +45,6 @@ a:hover { text-decoration: underline; color: #aaa; }
   border: 0;
 }
 
-
 #toolbar {
   position: fixed;
   color: #fff;
@@ -60,6 +59,7 @@ a:hover { text-decoration: underline; color: #aaa; }
   padding: 1em;
   margin: 0;
   border-width: 0;
+  outline-width: 0;
   clear: both;
 }
 
@@ -73,6 +73,7 @@ a:hover { text-decoration: underline; color: #aaa; }
 
 /* not very important info */
 .notice td, .join td, .part td, .message .date { color: #555; }
+.date { font-size: 80%; }
 .error td { color: #933; }
 .personal .nick, .notice .nick { color: #cd5; }
 
@@ -102,5 +103,5 @@ a:hover { text-decoration: underline; color: #aaa; }
 #toolbar li {
   display: block; 
   float: left;
-  margin: 0 0.5em;
+  margin: 0 0.5em 0 0;
 }
