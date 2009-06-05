@@ -27,7 +27,7 @@ a { text-decoration: none; color: #888; }
 a:hover { text-decoration: underline; color: #aaa; }
 
 #loading, #connect {
-  background: url(/bg.png);
+  background: #22252a;
   position: fixed;
   top: 0;
   left: 0;
@@ -40,36 +40,10 @@ a:hover { text-decoration: underline; color: #aaa; }
 #connect { z-index: 10000001; }
 
 #loading p, #connect fieldset  {
-  margin: 5em auto;
-  width: 20em;
+  font-family: DejaVu Sans Mono, fixed; 
+  width: 30em;
+  border: 0;
 }
-
-/* Here's our form stuff */
- fieldset, form, label, legend
-{border: 0; margin: 0; outline: 0; padding: 0; background: transparent; vertical-align: baseline;}
-
-form .field, form .buttons {clear: both; margin: 0 0 1.5em;}
-form .field label {display: block;}
-form ul.fields {margin: 0 0 1.5em; padding: 0;}
-form ul.fields li {list-style-type: none; margin: 0;}
-form ul.inline li, form ul.inline label {display: inline;}
-form ul.inline li {padding: 0 .75em 0 0;}
-
-input.radio, input.checkbox {vertical-align: top;}
-label, button, input.submit, input.image {cursor: pointer;}
-* html input.radio, * html input.checkbox {vertical-align: middle;} /* ie6 */
-*+html input.radio, *+html input.checkbox {vertical-align: middle;} /* ie7 */
-
-textarea {overflow: auto;}
-input.text, input.password, textarea, select {margin: 0; vertical-align: baseline;}
-input.text, input.password, textarea {border: 1px solid #444; padding: 2px;}
-input.text, input.password, textarea {
-  background: #aaa;
-}
-
-/* horizontal layout */
-form.horizontal .field {padding-left: 150px;}
-form.horizontal .field label {display: inline; float: left; width: 140px; margin-left: -150px;}
 
 
 #toolbar {
@@ -114,10 +88,10 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
   font-weight: bold;
   padding: 0 1em 0 0.5em;
 }
+
 .nick a {
   color: inherit;
 }
-
 
 #toolbar ul {
   margin: 0;
@@ -130,4 +104,3 @@ form.horizontal .field label {display: inline; float: left; width: 140px; margin
   float: left;
   margin: 0 0.5em;
 }
-

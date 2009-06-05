@@ -1,3 +1,6 @@
+HOST = null; // localhost
+PORT = 8000;
+
 var fu = require("fu");
 
 var MESSAGE_BACKLOG = 200;
@@ -96,10 +99,9 @@ setInterval(function () {
 }, 1000);
 
 function onLoad () {
-  fu.listen(7000);
+  fu.listen(PORT, HOST);
 
   fu.get("/", fu.staticHandler("index.html"));
-  fu.get("/bg.png", fu.staticHandler("bg.png"));
   fu.get("/style.css", fu.staticHandler("style.css"));
   fu.get("/client.js", fu.staticHandler("client.js"));
   fu.get("/jquery-1.2.6.min.js", fu.staticHandler("jquery-1.2.6.min.js"));

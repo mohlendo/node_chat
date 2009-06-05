@@ -276,7 +276,6 @@ $(document).ready(function() {
   $("#entry").keypress(handleKeyPress);
 
   $("#connectButton").click(function () {
-    $("#loading").show();
     showLoad();
     var nick = $("#nickInput").attr("value");
 
