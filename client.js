@@ -6,11 +6,16 @@ var CONFIG = { debug: false
 
 var nicks = [];
 
+function updateUsersLink ( ) {
+  $("#usersLink").text(nicks.length.toString() + " users");
+}
+
 function userJoin(nick, timestamp) {
   addMessage(nick, "joined", timestamp, "join");
   for (var i = 0; i < nicks.length; i++)
     if (nicks[i] == nick) return;
   nicks.push(nick);
+  updateUsersLink();
 }
 
 function userPart(nick, timestamp) {
@@ -18,9 +23,10 @@ function userPart(nick, timestamp) {
   for (var i = 0; i < nicks.length; i++) {
     if (nicks[i] == nick) {
       nicks.splice(i,1)
-      return;
+      break;
     }
   }
+  updateUsersLink();
 }
 
 // utility functions
@@ -263,20 +269,20 @@ function onConnect (session) {
   showChat(CONFIG.nick);
 }
 
-function who (callback) {
+function who () {
   jQuery.get("/who", {}, function (data, status) {
     if (status != "success") return;
     nicks = data.nicks;
     var nick_string = nicks.length > 0 ? nicks.join(", ") : "(none)";
-
     addMessage("users:", nick_string, new Date(), "notice");
-    if (callback) callback();
   }, "json");
 }
 
 $(document).ready(function() {
 
   $("#entry").keypress(handleKeyPress);
+
+  $("#usersLink").click(who);
 
   $("#connectButton").click(function () {
     showLoad();
