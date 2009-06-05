@@ -7,7 +7,9 @@ var CONFIG = { debug: false
 var nicks = [];
 
 function updateUsersLink ( ) {
-  $("#usersLink").text(nicks.length.toString() + " users");
+  var t = nicks.length.toString() + " user";
+  if (nicks.length != 1) t += "s";
+  $("#usersLink").text(t);
 }
 
 function userJoin(nick, timestamp) {
