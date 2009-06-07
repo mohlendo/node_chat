@@ -205,7 +205,7 @@ function onConnect (session) {
   showChat(CONFIG.nick);
 }
 
-function outputNickString () {
+function outputUsers () {
   var nick_string = nicks.length > 0 ? nicks.join(", ") : "(none)";
   addMessage("users:", nick_string, new Date(), "notice");
 }
@@ -214,7 +214,7 @@ function who () {
   jQuery.get("/who", {}, function (data, status) {
     if (status != "success") return;
     nicks = data.nicks;
-    outputNickString();
+    outputUsers();
   }, "json");
 }
 
@@ -227,7 +227,7 @@ $(document).ready(function() {
     $("#entry").attr("value", ""); // clear the entry field.
   });
 
-  $("#usersLink").click(outputNickString);
+  $("#usersLink").click(outputUsers);
 
   $("#connectButton").click(function () {
     showLoad();
