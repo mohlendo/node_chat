@@ -108,77 +108,6 @@ function addMessage (from, text, time, _class) {
   scrollDown();
 }
 
-function matchingNicks (partial) {
-  var re = new RegExp(partial);
-  var matching = [];
-  for (var i = 0; i < nicks.length; i++) {
-    if (re.exec(nicks[i])) matching.push(nicks[i]);
-  }
-  return matching;
-}
-
-function clearEntry () {
-  $("#entry").attr("value", "");
-}
-
-// for tab completion. a list of possible nicks.
-var completionList = null;
-var commandHistory = [""];
-var commandHistoryIndex = 0;
-
-function handleKeyPress (e) {
-  //console.log("key press " + e.keyCode.toString());
-  if (e.keyCode == 9 /* tab */) {
-    if (completionList === null) {
-      // try to complete a nickname.
-      var enteredText = $("#entry").attr("value");
-      var words = enteredText.split(/\s+/);
-      if (words.length > 1) { 
-        $("#entry").focus();
-        return;
-      }
-      var partial = words[0];
-      completionList = matchingNicks(partial);
-    }
-
-    var possibility = (completionList.shift() || "") + ": ";
-    $("#entry").attr("value", possibility);
-    $("#entry").focus();
-    e.preventDefault();
-    return;
-  }
-  // not tab? clear completionList 
-  completionList = null;
-
-  if (e.keyCode == 38 /* up */) {
-    commandHistoryIndex += 1;
-    if (commandHistoryIndex == commandHistory.length)
-      commandHistoryIndex = commandHistory.length - 1;
-    $("#entry").attr("value", commandHistory[commandHistoryIndex]);
-    return;
-  }
-  if (e.keyCode == 40 /* down */) {
-    commandHistoryIndex -= 1;
-    if (commandHistoryIndex < 0)
-      commandHistoryIndex = 0;
-    $("#entry").attr("value", commandHistory[commandHistoryIndex]);
-    return;
-  }
-
-  var msg = $("#entry").attr("value").replace("\n", "");
-  commandHistory[0] = msg;
-  commandHistoryIndex = 0;
-
-  if (e.keyCode != 13 /* Return */) return;
-
-  if (!util.isBlank(msg)) {
-    send(msg);
-  }
-
-  commandHistory.unshift("");
-  clearEntry();
-};
-
 var transmission_errors = 0;
 var first_poll = true;
 
@@ -287,7 +216,12 @@ function who () {
 
 $(document).ready(function() {
 
-  $("#entry").keypress(handleKeyPress);
+  $("#entry").keypress(function (e) {
+    if (e.keyCode != 13 /* Return */) return;
+    var msg = $("#entry").attr("value").replace("\n", "");
+    if (!util.isBlank(msg)) send(msg);
+    $("#entry").attr("value", ""); // clear the entry field.
+  });
 
   $("#usersLink").click(who);
 
