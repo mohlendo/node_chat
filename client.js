@@ -182,7 +182,6 @@ function showLoad () {
 }
 
 function showChat (nick) {
-  $("#nick").text(nick);
   $("#toolbar").show();
   $("#entry").focus();
 
