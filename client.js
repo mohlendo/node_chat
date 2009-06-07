@@ -207,6 +207,7 @@ function onConnect (session) {
 function outputUsers () {
   var nick_string = nicks.length > 0 ? nicks.join(", ") : "(none)";
   addMessage("users:", nick_string, new Date(), "notice");
+  return false;
 }
 
 function who () {
