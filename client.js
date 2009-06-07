@@ -205,12 +205,16 @@ function onConnect (session) {
   showChat(CONFIG.nick);
 }
 
+function outputNickString () {
+  var nick_string = nicks.length > 0 ? nicks.join(", ") : "(none)";
+  addMessage("users:", nick_string, new Date(), "notice");
+}
+
 function who () {
   jQuery.get("/who", {}, function (data, status) {
     if (status != "success") return;
     nicks = data.nicks;
-    var nick_string = nicks.length > 0 ? nicks.join(", ") : "(none)";
-    addMessage("users:", nick_string, new Date(), "notice");
+    outputNickString();
   }, "json");
 }
 
@@ -223,7 +227,7 @@ $(document).ready(function() {
     $("#entry").attr("value", ""); // clear the entry field.
   });
 
-  $("#usersLink").click(who);
+  $("#usersLink").click(outputNickString);
 
   $("#connectButton").click(function () {
     showLoad();
