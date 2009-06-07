@@ -70,9 +70,14 @@ function scrollDown () {
 function addMessage (from, text, time, _class) {
   if (text === null)
     return;
-  
-  if (time !== null)
+
+  if (time == null) {
+    // if the time is null or undefined, use the current time.
     time = new Date();
+  } else if ((time instanceof Date) === false) {
+    // if it's a timestamp, interpret it
+    time = new Date(time);
+  }
 
   var messageElement = $(document.createElement("table"));
 
