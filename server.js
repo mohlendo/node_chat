@@ -1,11 +1,10 @@
 HOST = null; // localhost
-PORT = 8000;
+PORT = 7000;
 
-var fu = require("fu");
+var fu = require("fu.js");
 
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;
-
 
 var channel = new function () {
   var messages = [];
