@@ -127,6 +127,9 @@ function onLoad () {
       res.simpleJSON(400, {error: "Nick in use"});
       return;
     }
+
+    puts("connection: " + nick + "@" + res.connection.remoteAddress);
+
     channel.appendMessage(session.nick, "join");
     res.simpleJSON(200, { id: session.id, nick: session.nick});
   });
