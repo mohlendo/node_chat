@@ -38,6 +38,33 @@ var server = new node.http.Server(function (req, res) {
       res.finish();
     };
 
+    req.cookies = {};
+    for (var i = 0; i < req.headers.length; i++) {
+      if (req.headers[i][0].toLowerCase() == "cookie") {
+        var cookies = req.headers[i][1].split(/\s*;\s*/);
+        for (var j = 0; j < cookies.length; j++) {
+          var pos = cookies[j].indexOf("=");
+          var name = cookies[j].substring(0, pos);
+          var value = cookies[j].substring(pos+1);
+          req.cookies[name] = value;
+        }
+      }
+    }
+    res.setCookie = function (name, value) {
+      if (!res._cookies) { res._cookies = []; }
+      res._cookies.push(name+"="+value);
+    };
+    res._sendHeader = res.sendHeader;
+    res.sendHeader = function (code, headers) {
+      if (res._cookies) {
+        for (var i=0; i<res._cookies.length; i++) {
+          headers.push(["Set-Cookie", res._cookies[i]]);
+        }
+      }
+      res._sendHeader(code, headers);
+    };
+
+
     handler(req, res);
   }
 });
