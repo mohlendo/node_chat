@@ -111,6 +111,10 @@ function createSession (nick) {
         session.channel = channels[channelName] || createChannel(channelName);
         session.channel.appendMessage(session.nick, "join");
       }
+    },
+
+    query: function (since, callback) {
+      return session.channel.query(since, callback);
     }
   };
 
@@ -190,12 +194,16 @@ fu.get("/recv", function (req, res) {
   }
 
   var since = parseInt(req.uri.params.since, 10);
-
-  var channel = session ? session.channel : channels[DEFAULT_CHANNEL];
-  channel.query(since, function (messages) {
-    if (session) session.poke();
-    res.simpleJSON(200, { messages: messages });
-  });
+  if (session) {
+    session.query(since, function(messages) {
+      session.poke();
+      res.simpleJSON(200, { messages: messages });
+    });
+  } else {
+    channels[DEFAULT_CHANNEL].query(since, function(messages) {
+      res.simpleJSON(200, { messages: messages });
+    });
+  }
 });
 
 var commands = {
