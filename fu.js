@@ -17,7 +17,7 @@ fu.get = function (path, handler) {
   getMap[path] = handler;
 };
 
-var server = new node.http.Server(function (req, res) {
+var server = node.http.createServer(function (req, res) {
   if (req.method === "GET" || req.method === "HEAD") {
     var handler = getMap[req.uri.path] || notFound;
 
