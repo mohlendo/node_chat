@@ -128,7 +128,7 @@ function onLoad () {
       return;
     }
 
-    puts("connection: " + nick + "@" + res.connection.remoteAddress);
+    //puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
     channel.appendMessage(session.nick, "join");
     res.simpleJSON(200, { id: session.id, nick: session.nick});

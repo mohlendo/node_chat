@@ -3,10 +3,11 @@ DEBUG = true;
 var fu = exports;
 
 var NOT_FOUND = "Not Found\n";
+
 function notFound(req, res) {
   res.sendHeader(404, [ ["Content-Type", "text/plain"]
-                    , ["Content-Length", NOT_FOUND.length]
-                    ]);
+                      , ["Content-Length", NOT_FOUND.length]
+                      ]);
   res.sendBody(NOT_FOUND);
   res.finish();
 }
@@ -38,33 +39,6 @@ var server = node.http.createServer(function (req, res) {
       res.finish();
     };
 
-    req.cookies = {};
-    for (var i = 0; i < req.headers.length; i++) {
-      if (req.headers[i][0].toLowerCase() == "cookie") {
-        var cookies = req.headers[i][1].split(/\s*;\s*/);
-        for (var j = 0; j < cookies.length; j++) {
-          var pos = cookies[j].indexOf("=");
-          var name = cookies[j].substring(0, pos);
-          var value = cookies[j].substring(pos+1);
-          req.cookies[name] = value;
-        }
-      }
-    }
-    res.setCookie = function (name, value) {
-      if (!res._cookies) { res._cookies = []; }
-      res._cookies.push(name+"="+value);
-    };
-    res._sendHeader = res.sendHeader;
-    res.sendHeader = function (code, headers) {
-      if (res._cookies) {
-        for (var i=0; i<res._cookies.length; i++) {
-          headers.push(["Set-Cookie", res._cookies[i]]);
-        }
-      }
-      res._sendHeader(code, headers);
-    };
-
-
     handler(req, res);
   }
 });
@@ -92,9 +66,10 @@ fu.staticHandler = function (filename) {
       return;
     }
 
-    node.fs.cat(filename, encoding, function (status, data) {
-      if (status != 0) return notFound;
+    puts("loading " + filename + "...");
+    var promise = node.fs.cat(filename, encoding);
 
+    promise.addCallback(function (data) {
       body = data;
       headers = [ [ "Content-Type"   , content_type ]
                 , [ "Content-Length" , body.length ]
@@ -104,6 +79,10 @@ fu.staticHandler = function (filename) {
        
       puts("static file " + filename + " loaded");
       callback();
+    });
+
+    promise.addErrback(function () {
+      puts("Error loading " + filename);
     });
   }
 
