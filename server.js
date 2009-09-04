@@ -109,86 +109,84 @@ setInterval(function () {
   }
 }, 1000);
 
-function onLoad () {
-  fu.listen(PORT, HOST);
+fu.listen(PORT, HOST);
 
-  fu.get("/", fu.staticHandler("index.html"));
-  fu.get("/style.css", fu.staticHandler("style.css"));
-  fu.get("/client.js", fu.staticHandler("client.js"));
-  fu.get("/jquery-1.2.6.min.js", fu.staticHandler("jquery-1.2.6.min.js"));
+fu.get("/", fu.staticHandler("index.html"));
+fu.get("/style.css", fu.staticHandler("style.css"));
+fu.get("/client.js", fu.staticHandler("client.js"));
+fu.get("/jquery-1.2.6.min.js", fu.staticHandler("jquery-1.2.6.min.js"));
 
 
-  fu.get("/who", function (req, res) {
-    var nicks = [];
-    for (var id in sessions) {
-      if (!sessions.hasOwnProperty(id)) continue;
-      var session = sessions[id];
-      nicks.push(session.nick);
-    }
-    res.simpleJSON(200, { nicks: nicks });
-  });
-
-  fu.get("/join", function (req, res) {
-    var nick = req.uri.params["nick"];
-    if (nick == null || nick.length == 0) {
-      res.simpleJSON(400, {error: "Bad nick."});
-      return;
-    }
-    var session = createSession(nick);
-    if (session == null) {
-      res.simpleJSON(400, {error: "Nick in use"});
-      return;
-    }
-
-    //puts("connection: " + nick + "@" + res.connection.remoteAddress);
-
-    channel.appendMessage(session.nick, "join");
-    res.simpleJSON(200, { id: session.id, nick: session.nick});
-  });
-
-  fu.get("/part", function (req, res) {
-    var id = req.uri.params.id;
-    var session;
-    if (id && sessions[id]) {
-      session = sessions[id];
-      session.destroy();
-    }
-    res.simpleJSON(200, { });
-  });
-
-  fu.get("/recv", function (req, res) {
-    if (!req.uri.params.since) {
-      res.simpleJSON(400, { error: "Must supply since parameter" });
-      return;
-    }
-    var id = req.uri.params.id;
-    var session;
-    if (id && sessions[id]) {
-      session = sessions[id];
-      session.poke();
-    }
-
-    var since = parseInt(req.uri.params.since, 10);
-
-    channel.query(since, function (messages) {
-      if (session) session.poke();
-      res.simpleJSON(200, { messages: messages });
-    });
-  });
-
-  fu.get("/send", function (req, res) {
-    var id = req.uri.params.id;
-    var text = req.uri.params.text;
-
+fu.get("/who", function (req, res) {
+  var nicks = [];
+  for (var id in sessions) {
+    if (!sessions.hasOwnProperty(id)) continue;
     var session = sessions[id];
-    if (!session || !text) {
-      res.simpleJSON(400, { error: "No such session id" });
-      return; 
-    }
+    nicks.push(session.nick);
+  }
+  res.simpleJSON(200, { nicks: nicks });
+});
 
+fu.get("/join", function (req, res) {
+  var nick = req.uri.params["nick"];
+  if (nick == null || nick.length == 0) {
+    res.simpleJSON(400, {error: "Bad nick."});
+    return;
+  }
+  var session = createSession(nick);
+  if (session == null) {
+    res.simpleJSON(400, {error: "Nick in use"});
+    return;
+  }
+
+  //puts("connection: " + nick + "@" + res.connection.remoteAddress);
+
+  channel.appendMessage(session.nick, "join");
+  res.simpleJSON(200, { id: session.id, nick: session.nick});
+});
+
+fu.get("/part", function (req, res) {
+  var id = req.uri.params.id;
+  var session;
+  if (id && sessions[id]) {
+    session = sessions[id];
+    session.destroy();
+  }
+  res.simpleJSON(200, { });
+});
+
+fu.get("/recv", function (req, res) {
+  if (!req.uri.params.since) {
+    res.simpleJSON(400, { error: "Must supply since parameter" });
+    return;
+  }
+  var id = req.uri.params.id;
+  var session;
+  if (id && sessions[id]) {
+    session = sessions[id];
     session.poke();
+  }
 
-    channel.appendMessage(session.nick, "msg", text);
-    res.simpleJSON(200, {});
+  var since = parseInt(req.uri.params.since, 10);
+
+  channel.query(since, function (messages) {
+    if (session) session.poke();
+    res.simpleJSON(200, { messages: messages });
   });
-}
+});
+
+fu.get("/send", function (req, res) {
+  var id = req.uri.params.id;
+  var text = req.uri.params.text;
+
+  var session = sessions[id];
+  if (!session || !text) {
+    res.simpleJSON(400, { error: "No such session id" });
+    return; 
+  }
+
+  session.poke();
+
+  channel.appendMessage(session.nick, "msg", text);
+  res.simpleJSON(200, {});
+});
