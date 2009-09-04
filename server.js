@@ -17,6 +17,18 @@ var channel = new function () {
             , timestamp: (new Date()).getTime()
             };
 
+    switch (type) {
+      case "msg":
+        puts("<" + nick + "> " + text);
+        break;
+      case "join":
+        puts(nick + " join");
+        break;
+      case "part":
+        puts(nick + " part");
+        break;
+    }
+
     messages.push( m );
 
     while (callbacks.length > 0) {
