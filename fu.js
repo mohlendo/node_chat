@@ -1,3 +1,5 @@
+var createServer = require("/http.js").createServer;
+var sys = require("/sys.js");
 DEBUG = false;
 
 var fu = exports;
@@ -18,7 +20,7 @@ fu.get = function (path, handler) {
   getMap[path] = handler;
 };
 
-var server = node.http.createServer(function (req, res) {
+var server = createServer(function (req, res) {
   if (req.method === "GET" || req.method === "HEAD") {
     var handler = getMap[req.uri.path] || notFound;
 
@@ -45,7 +47,7 @@ var server = node.http.createServer(function (req, res) {
 
 fu.listen = function (port, host) {
   server.listen(port, host);
-  puts("Server at http://" + (host || "127.0.0.1") + ":" + port.toString() + "/");
+  sys.puts("Server at http://" + (host || "127.0.0.1") + ":" + port.toString() + "/");
 };
 
 fu.close = function () { server.close(); };
@@ -58,7 +60,7 @@ function extname (path) {
 fu.staticHandler = function (filename) {
   var body, headers;
   var content_type = fu.mime.lookupExtension(extname(filename));
-  var encoding = (content_type.slice(0,4) === "text" ? "utf8" : "raw");
+  var encoding = (content_type.slice(0,4) === "text" ? "utf8" : "binary");
 
   function loadResponseData(callback) {
     if (body && headers && !DEBUG) {
@@ -66,8 +68,8 @@ fu.staticHandler = function (filename) {
       return;
     }
 
-    puts("loading " + filename + "...");
-    var promise = node.fs.cat(filename, encoding);
+    sys.puts("loading " + filename + "...");
+    var promise = process.fs.cat(filename, encoding);
 
     promise.addCallback(function (data) {
       body = data;
@@ -77,12 +79,12 @@ fu.staticHandler = function (filename) {
       if (!DEBUG)
         headers.push(["Cache-Control", "public"]);
        
-      puts("static file " + filename + " loaded");
+      sys.puts("static file " + filename + " loaded");
       callback();
     });
 
     promise.addErrback(function () {
-      puts("Error loading " + filename);
+      sys.puts("Error loading " + filename);
     });
   }
 

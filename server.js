@@ -1,7 +1,8 @@
 HOST = null; // localhost
-PORT = 7000;
+PORT = 8001;
 
 var fu = require("fu.js");
+var sys = require("/sys.js");
 
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;
@@ -19,13 +20,13 @@ var channel = new function () {
 
     switch (type) {
       case "msg":
-        puts("<" + nick + "> " + text);
+        sys.puts("<" + nick + "> " + text);
         break;
       case "join":
-        puts(nick + " join");
+        sys.puts(nick + " join");
         break;
       case "part":
-        puts(nick + " part");
+        sys.puts(nick + " part");
         break;
     }
 
@@ -139,7 +140,7 @@ fu.get("/join", function (req, res) {
     return;
   }
 
-  //puts("connection: " + nick + "@" + res.connection.remoteAddress);
+  //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
   channel.appendMessage(session.nick, "join");
   res.simpleJSON(200, { id: session.id, nick: session.nick});
