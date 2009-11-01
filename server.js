@@ -1,8 +1,8 @@
 HOST = null; // localhost
 PORT = 8001;
 
-var fu = require("fu.js");
-var sys = require("/sys.js");
+var fu = require("./fu");
+var sys = require("sys");
 
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;

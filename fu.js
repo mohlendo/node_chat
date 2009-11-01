@@ -1,5 +1,5 @@
-var createServer = require("/http.js").createServer;
-var sys = require("/sys.js");
+var createServer = require("http").createServer;
+var sys = require("sys");
 DEBUG = false;
 
 var fu = exports;
