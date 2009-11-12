@@ -1,16 +1,22 @@
 HOST = null; // localhost
 PORT = 8001;
+GLOBAL.DEBUG = true;
 
 var fu = require("./fu");
 var sys = require("sys");
+var http = require("http");
+var redis = require("./redis");
 
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;
+var CHAT_DB_NUMBER  = 6;
+var ROOM = "room:1";
+
+var rclient = new redis.create_client();
+rclient.select(CHAT_DB_NUMBER);
 
 var channel = new function () {
-  var messages = [];
   var callbacks = [];
-
   this.appendMessage = function (nick, type, text) {
     var m = { nick: nick
             , type: type // "msg", "join", "part"
@@ -21,38 +27,45 @@ var channel = new function () {
     switch (type) {
       case "msg":
         sys.puts("<" + nick + "> " + text);
+        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + text, function(reply) {
+          sys.debug('writing message was: ' + reply);    
+        });
         break;
       case "join":
+        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + 'joined');
         sys.puts(nick + " join");
         break;
       case "part":
         sys.puts(nick + " part");
+        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + 'parted');
         break;
     }
-
-    messages.push( m );
 
     while (callbacks.length > 0) {
       callbacks.shift().callback([m]);
     }
 
-    while (messages.length > MESSAGE_BACKLOG)
-      messages.shift();
   };
 
   this.query = function (since, callback) {
-    var matching = [];
-    for (var i = 0; i < messages.length; i++) {
-      var message = messages[i];
-      if (message.timestamp > since)
-        matching.push(message)
-    }
-
-    if (matching.length != 0) {
-      callback(matching);
-    } else {
-      callbacks.push({ timestamp: new Date(), callback: callback });
-    }
+    rclient.lrange(ROOM, 0, -1, function(values) {
+      var matching = [];
+      if (values) {
+        for(var i = 0; i < values.length; i++) {
+          var message = values[i].split('|');
+          if (message[0] > since) {
+            matching.push({timestamp: message[0],
+                          nick: message[1],
+                          text: message[2]});
+          }
+        }
+      }
+      if (matching.length != 0) {
+        callback(matching);
+      } else {
+        callbacks.push({ timestamp: new Date(), callback: callback });
+      }
+    });
   };
 
   // clear old callbacks
