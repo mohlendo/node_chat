@@ -1,4 +1,12 @@
 Demo for node.js http://tinyclouds.org/node
 
+with a simple redis integration using http://github.com/fictorial/redis-node-client.
+After some chat messages, the redis client dies with the following error:
+
+node_chat/redis.js:103
+          throw "unknown prefix " + reply_prefix + " in reply @ offset " + off
+
+Any hints?
+
 to run
 $ /usr/local/bin/node server.js
