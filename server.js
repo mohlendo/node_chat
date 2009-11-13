@@ -7,63 +7,72 @@ var sys = require("sys");
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;
 
-var channel = new function () {
-  var messages = [];
-  var callbacks = [];
+var channels={};
 
-  this.appendMessage = function (nick, type, text) {
-    var m = { nick: nick
-            , type: type // "msg", "join", "part"
-            , text: text
-            , timestamp: (new Date()).getTime()
-            };
+function createChannel(name) {
+  var channel = new function () {
+    var messages = [];
+    var callbacks = [];
 
-    switch (type) {
-      case "msg":
-        sys.puts("<" + nick + "> " + text);
-        break;
-      case "join":
-        sys.puts(nick + " join");
-        break;
-      case "part":
-        sys.puts(nick + " part");
-        break;
-    }
+    this.appendMessage = function (nick, type, text) {
+      var m = { nick: nick
+              , type: type // "msg", "join", "part"
+              , text: text
+              , timestamp: (new Date()).getTime()
+              };
 
-    messages.push( m );
+      switch (type) {
+        case "msg":
+          sys.puts("<" + nick + "> " + text);
+          break;
+        case "join":
+          sys.puts(nick + " join");
+          break;
+        case "part":
+          sys.puts(nick + " part");
+          break;
+      }
 
-    while (callbacks.length > 0) {
-      callbacks.shift().callback([m]);
-    }
+      messages.push( m );
 
-    while (messages.length > MESSAGE_BACKLOG)
-      messages.shift();
+      while (callbacks.length > 0) {
+        callbacks.shift().callback([m]);
+      }
+
+      while (messages.length > MESSAGE_BACKLOG)
+        messages.shift();
+    };
+
+    this.query = function (since, callback) {
+      var matching = [];
+      for (var i = 0; i < messages.length; i++) {
+        var message = messages[i];
+        if (message.timestamp > since)
+          matching.push(message)
+      }
+
+      if (matching.length != 0) {
+        callback(matching);
+      } else {
+        callbacks.push({ timestamp: new Date(), callback: callback });
+      }
+    };
+
+    // clear old callbacks
+    // they can hang around for at most 30 seconds.
+    setInterval(function () {
+      var now = new Date();
+      while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000) {
+        callbacks.shift().callback([]);
+      }
+    }, 1000);
   };
 
-  this.query = function (since, callback) {
-    var matching = [];
-    for (var i = 0; i < messages.length; i++) {
-      var message = messages[i];
-      if (message.timestamp > since)
-        matching.push(message)
-    }
+  channels[name] = channel;
+  return channel;
+}
 
-    if (matching.length != 0) {
-      callback(matching);
-    } else {
-      callbacks.push({ timestamp: new Date(), callback: callback });
-    }
-  };
-
-  // clear old callbacks
-  // they can hang around for at most 30 seconds.
-  setInterval(function () {
-    var now = new Date();
-    while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000) {
-      callbacks.shift().callback([]);
-    }
-  }, 1000);
-};
+createChannel("");
 
 var sessions = {};
 
@@ -81,6 +90,8 @@ function createSession (nick) {
 
     id: Math.floor(Math.random()*99999999999).toString(),
 
+    channel: channels[""],
+
     timestamp: new Date(),
 
     poke: function () {
@@ -88,8 +99,14 @@ function createSession (nick) {
     },
 
     destroy: function () {
-      channel.appendMessage(session.nick, "part");
+      session.channel.appendMessage(session.nick, "part");
       delete sessions[session.id];
+    },
+
+    switchTo: function (channelName) {
+      session.channel.appendMessage(session.nick, "part");
+      session.channel = channels[channelName] || createChannel(channelName);
+      session.channel.appendMessage(session.nick, "join");
     }
   };
 
@@ -142,7 +159,7 @@ fu.get("/join", function (req, res) {
 
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
-  channel.appendMessage(session.nick, "join");
+  session.channel.appendMessage(session.nick, "join");
   res.simpleJSON(200, { id: session.id, nick: session.nick});
 });
 
@@ -170,12 +187,18 @@ fu.get("/recv", function (req, res) {
 
   var since = parseInt(req.uri.params.since, 10);
 
+  var channel = session ? session.channel : channels[""];
   channel.query(since, function (messages) {
     if (session) session.poke();
     res.simpleJSON(200, { messages: messages });
   });
 });
 
+var commands = {
+  "join": function(session, arg) { session.switchTo(arg); },
+  "leave": function(session) { session.switchTo(""); }
+};
+ 
 fu.get("/send", function (req, res) {
   var id = req.uri.params.id;
   var text = req.uri.params.text;
@@ -187,7 +210,16 @@ fu.get("/send", function (req, res) {
   }
 
   session.poke();
-
-  channel.appendMessage(session.nick, "msg", text);
+  
+  var match = text.match(/^\/(\S+)\s*(.+)?$/);
+  if (match) {
+    sys.puts(match.length + " " + match)
+    var command = commands[match[1]];
+    if (command) {
+      command(session, match[2] ? match[2].split(/\s/) : []);
+    }
+  } else {
+    session.channel.appendMessage(session.nick, "msg", text);
+  }
   res.simpleJSON(200, {});
 });
