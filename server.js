@@ -22,20 +22,40 @@ function createChannel(name) {
   var channel = new function () {
     var callbacks = [];
     var members = {};
+    var nMembers = 0;
 
     this.name = name;
 
     this.join = function (session, text) {
-      sys.puts("channel.join(" + session.nick + ", " + this.name + ")");
-      members[session] = { timestamp: new Date(), session: session };
-      this.appendMessage(session.nick, "join", text);
-    }
+      if (!members[session.id]) {
+        sys.puts("channel.join(" + session.nick + ", " + this.name + ")");
+        members[session.id] = { timestamp: new Date(), session: session };
+        nMembers++;
+        this.appendMessage(session.nick, "join", text);
+      }
+    };
 
     this.leave = function (session, text) {
-      sys.puts("channel.leave(" + session.nick + ", " + this.name + ")");
-      this.appendMessage(session.nick, "part", text)
-      delete members[session];
-    }
+      if (members[session.id]) {
+        sys.puts("channel.leave(" + session.nick + ", " + this.name + ")");
+        this.appendMessage(session.nick, "part", text)
+        delete members[session.id];
+        nMembers--;
+      }
+    };
+
+    this.getNumberOfMembers = function() {
+      return nMembers;
+    };
+
+    this.getMembers = function() {
+      var nicks = [];
+      for (sessionId in members) {
+        if (!members.hasOwnProperty(sessionId)) continue;
+        nicks.push(members[sessionId].session.nick);
+      }
+      return nicks;
+    };
 
     this.appendMessage = function (nick, type, text) {
       rclient.llen(name).addCallback(function (value) { 
@@ -46,6 +66,11 @@ function createChannel(name) {
           , timestamp: (new Date()).getTime()
           };
           rclient.rpush(name, JSON.stringify(m));
+
+          for (var sessionId in members) {
+            if (!members.hasOwnProperty(sessionId)) continue;
+            members[sessionId].session.deliver([m]);
+          }
 
           while (callbacks.length > 0) {
             callbacks.shift().callback([m]);
@@ -67,7 +92,8 @@ function createChannel(name) {
             callback(matching);
           });
         } else {
-          callbacks.push({ timestamp: new Date(), callback: callback });
+          callback([]);
+          // callbacks.push({ timestamp: new Date(), callback: callback });
         }
       });
     };
@@ -123,6 +149,9 @@ function createSession (nick) {
     // function (messages)
     callback: null,
 
+    // private messages are transient and will be delivered in-band to this session
+    systemMessages: [],
+
     poke: function () {
       session.timestamp = new Date();
     },
@@ -135,15 +164,46 @@ function createSession (nick) {
     switchTo: function (channelName) {
       if (session.channel.name !== channelName) {
         session.channel.leave(session, "left " + session.channel.name);
-        sys.puts("channel is " + session.channel.name + " before switch");
         session.channel = channels[channelName] || createChannel(channelName);
-        sys.puts("channel is " + session.channel.name + " after switch");
         session.channel.join(session, "enters " + session.channel.name);
       }
     },
 
     query: function (since, callback) {
-      return session.channel.query(since, callback);
+      if (session.systemMessages.length > 0) {
+        callback(session.systemMessages);
+        session.systemMessages.clear();
+      } else {
+        session.channel.query(since, function(messages) {
+          if (messages.length > 0) {
+            callback(messages);
+          } else {
+            session.callback = callback;
+          }
+        });
+      }
+    },
+
+    deliver: function (messages) {
+      if (this.callback) {
+        this.callback(messages);
+        this.callback = null;
+      }
+    },
+
+    sendSystemMessage: function (text) {
+      var message = { 
+        nick: "system",
+        type: "msg",
+        text: text,
+        timestamp: (new Date()).getTime()
+      };
+      
+      if (this.callback) {
+        this.deliver([message]);
+      } else {
+        systemMessages.push(message);
+      }
     }
   };
 
@@ -237,7 +297,32 @@ fu.get("/recv", function (req, res) {
 
 var commands = {
   "join": function(session, args) { session.switchTo(args[0]); },
-  "leave": function(session) { session.switchTo(DEFAULT_CHANNEL); }
+  "leave": function(session) { session.switchTo(DEFAULT_CHANNEL); },
+  "whoami": function(session) { session.sendSystemMessage("You are " + session.nick); },
+  "channels": function(session) {
+    var names  = [];
+    for (var name in channels) {
+      if (!channels.hasOwnProperty(name)) continue;
+      var label = "'" + name + "' (" + channels[name].getNumberOfMembers() + ")" + (name == session.channel.name ? "*" : "");
+      names.push(label);
+    }
+    session.sendSystemMessage("Available channels are " + names.join(", "));
+  },
+  "who": function(session) {
+    var allNicks = session.channel.getMembers();
+
+    // remove own name
+    var nicks = [];
+    for (var i in allNicks) {
+      var nick = allNicks[i];
+      if (nick !== session.nick)
+        nicks.push(nick);
+    }
+
+    var text = (nicks.length > 0) ? (nicks.join(", ") + " are here with you.") :
+      "You are all alone. Try /channels to find channels with someone to talk to.";
+    session.sendSystemMessage(text);
+  }
 };
  
 fu.get("/send", function (req, res) {
