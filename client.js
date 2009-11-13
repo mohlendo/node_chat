@@ -1,3 +1,4 @@
+
 var CONFIG = { debug: false
              , nick: "#"   // set in onConnect
              , id: null    // set in onConnect
@@ -18,6 +19,16 @@ function userJoin(nick, timestamp) {
     if (nicks[i] == nick) return;
   nicks.push(nick);
   updateUsersLink();
+  updateUsersDisplay();
+}
+
+function updateUsersDisplay() {
+  var newList = $("<ul></ul>");
+  for (var i = 0; i < nicks.length; i++) {
+    nick = nicks[i];
+    newList.append("<li>" + nick + "</li>");
+  }
+  $("#users ul").replaceWith(newList);
 }
 
 function userPart(nick, timestamp) {
