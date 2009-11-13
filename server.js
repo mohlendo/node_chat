@@ -106,7 +106,7 @@ function createSession (nick) {
     },
 
     switchTo: function (channelName) {
-      if (session.channel.name != channelName) {
+      if (session.channel.name !== channelName) {
         session.channel.appendMessage(session.nick, "part");
         session.channel = channels[channelName] || createChannel(channelName);
         session.channel.appendMessage(session.nick, "join");

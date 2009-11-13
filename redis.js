@@ -136,7 +136,17 @@ Redis.prototype.getset = function(key, value) {
   return this._send("GETSET " + key + " " + value.length + CRLF + value);
 };
 
-// mget, setnx
+Redis.prototype.mget = function(/*keys*/) {
+  var keys = [];
+  for (var i = 0; i < arguments.length; i++) {
+    keys.push(arguments[i]);
+  }
+  return this._send("MGET " + keys.join(" "));
+};
+
+Redis.prototype.setnx = function(key, value) {
+  return this._send("SETNX " + key + " " + value.length + CRLF + value);
+};
 
 Redis.prototype.incr = function(key, by) {
   if (by) {
@@ -152,15 +162,19 @@ Redis.prototype.decr = function(key, by) {
   return this._send("DECR " + key);
 };
 
-// exists, del, type
+Redis.prototype.del = function(key) {
+  return this._send("DEL " + key);
+};
+
+Redis.prototype.type = function(key) {
+  return this._send("TYPE " + key);
+};
 
 // commands operating on the key space
 
-Redis.prototype.dbSize = function() {
+Redis.prototype.dbsize = function() {
   return this._send("DBSIZE");
 };
-
-// ....
 
 // commands operating on lists
 
