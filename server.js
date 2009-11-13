@@ -39,7 +39,6 @@ function createChannel(name) {
 
     this.appendMessage = function (nick, type, text) {
       rclient.llen(name).addCallback(function (value) { 
-          sys.debug("next index " + value);
           var m = { index: value
           , nick: nick
           , type: type // "msg", "join", "part"
@@ -72,6 +71,18 @@ function createChannel(name) {
         }
       });
     };
+
+    this.nicks = function () {
+      var nicks = [];
+      for (var id in sessions) {
+        if (!sessions.hasOwnProperty(id)) continue;
+        var session = sessions[id];
+        if (this === session.channel) {
+          nicks.push(session.nick);
+        }
+      }
+      return nicks;
+    }
 
     // clear old callbacks
     // they can hang around for at most 30 seconds.
@@ -122,7 +133,7 @@ function createSession (nick) {
     },
 
     switchTo: function (channelName) {
-      if (session.channel.name != channelName) {
+      if (session.channel.name !== channelName) {
         session.channel.leave(session);
         session.channel = channels[channelName] || createChannel(channelName);
         session.channel.join(session);
@@ -184,7 +195,7 @@ fu.get("/join", function (req, res) {
 
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
-  res.simpleJSON(200, { id: session.id, nick: session.nick});
+  res.simpleJSON(200, { id: session.id, nick: session.nick, channel: session.channel.name, nicks: session.channel.nicks() });
 });
 
 fu.get("/part", function (req, res) {
@@ -223,7 +234,7 @@ fu.get("/recv", function (req, res) {
 });
 
 var commands = {
-  "join": function(session, arg) { session.switchTo(arg); },
+  "join": function(session, args) { session.switchTo(args[0]); },
   "leave": function(session) { session.switchTo(DEFAULT_CHANNEL); }
 };
  
@@ -240,14 +251,17 @@ fu.get("/send", function (req, res) {
   session.poke();
   
   var match = text.match(/^\/(\S+)\s*(.+)?$/);
+  var response = {};
   if (match) {
     sys.puts(match.length + " " + match)
     var command = commands[match[1]];
     if (command) {
       command(session, match[2] ? match[2].split(/\s/) : []);
+      response["channel"] = session.channel.name;
+      response["nicks"] = session.channel.nicks();
     }
   } else {
     session.channel.appendMessage(session.nick, "msg", text);
   }
-  res.simpleJSON(200, {});
+  res.simpleJSON(200, response);
 });
