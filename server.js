@@ -322,6 +322,14 @@ var commands = {
     var text = (nicks.length > 0) ? (nicks.join(", ") + " are here with you.") :
       "You are all alone. Try /channels to find channels with someone to talk to.";
     session.sendSystemMessage(text);
+  },
+  "help": function(session) {
+    var cmdNames = [];
+    for (cmd in commands) {
+      if (!commands.hasOwnProperty(cmd)) continue;
+      cmdNames.push("/"+cmd);
+    }
+    session.sendSystemMessage("Available commands: " + cmdNames.join(", "));
   }
 };
  
