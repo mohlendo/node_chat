@@ -26,7 +26,6 @@ function createChannel(name) {
 
     this.appendMessage = function (nick, type, text) {
       rclient.llen(name).addCallback(function (value) { 
-          sys.debug("next index " + value);
           var m = { index: value
           , nick: nick
           , type: type // "msg", "join", "part"
