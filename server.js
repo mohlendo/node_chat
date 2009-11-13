@@ -59,6 +59,18 @@ function createChannel(name) {
       });
     };
 
+    this.nicks = function () {
+      var nicks = [];
+      for (var id in sessions) {
+        if (!sessions.hasOwnProperty(id)) continue;
+        var session = sessions[id];
+        if (this === session.channel) {
+          nicks.push(session.nick);
+        }
+      }
+      return nicks;
+    }
+
     // clear old callbacks
     // they can hang around for at most 30 seconds.
     setInterval(function () {
@@ -163,7 +175,7 @@ fu.get("/join", function (req, res) {
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
   session.channel.appendMessage(session.nick, "join", session.nick + " joined");
-  res.simpleJSON(200, { id: session.id, nick: session.nick});
+  res.simpleJSON(200, { id: session.id, nick: session.nick, channel: session.channel.name, nicks: session.channel.nicks() });
 });
 
 fu.get("/part", function (req, res) {
@@ -215,14 +227,17 @@ fu.get("/send", function (req, res) {
   session.poke();
   
   var match = text.match(/^\/(\S+)\s*(.+)?$/);
+  var response = {};
   if (match) {
     sys.puts(match.length + " " + match)
     var command = commands[match[1]];
     if (command) {
       command(session, match[2] ? match[2].split(/\s/) : []);
+      response["channel"] = session.channel.name;
+      response["nicks"] = session.channel.nicks();
     }
   } else {
     session.channel.appendMessage(session.nick, "msg", text);
   }
-  res.simpleJSON(200, {});
+  res.simpleJSON(200, response);
 });
