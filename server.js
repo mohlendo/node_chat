@@ -21,8 +21,21 @@ var channels = {};
 function createChannel(name) {
   var channel = new function () {
     var callbacks = [];
+    var members = {};
 
     this.name = name;
+
+    this.join = function (session, text) {
+      sys.puts("channel.join(" + session.nick + ")");
+      members[session] = { timestamp: new Date(), session: session };
+      this.appendMessage(session.nick, "join", text);
+    }
+
+    this.leave = function (session, text) {
+      sys.puts("channel.leave(" + session.nick + ")");
+      this.appendMessage(session.nick, "part", text)
+      delete members[session];
+    }
 
     this.appendMessage = function (nick, type, text) {
       rclient.llen(name).addCallback(function (value) { 
@@ -96,20 +109,23 @@ function createSession (nick) {
 
     timestamp: new Date(),
 
+    // function (messages)
+    callback: null,
+
     poke: function () {
       session.timestamp = new Date();
     },
 
     destroy: function () {
-      session.channel.appendMessage(session.nick, "part", session.nick + " parted");
+      session.channel.leave(session, "part", session.nick + " parted");
       delete sessions[session.id];
     },
 
     switchTo: function (channelName) {
       if (session.channel.name != channelName) {
-        session.channel.appendMessage(session.nick, "part");
+        session.channel.leave(session);
         session.channel = channels[channelName] || createChannel(channelName);
-        session.channel.appendMessage(session.nick, "join");
+        session.channel.join(session);
       }
     },
 
@@ -119,6 +135,7 @@ function createSession (nick) {
   };
 
   sessions[session.id] = session;
+  session.channel.join(session, "join", session.nick + " joined");
   return session;
 }
 
@@ -167,7 +184,6 @@ fu.get("/join", function (req, res) {
 
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
-  session.channel.appendMessage(session.nick, "join", session.nick + " joined");
   res.simpleJSON(200, { id: session.id, nick: session.nick});
 });
 
