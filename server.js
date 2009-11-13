@@ -9,11 +9,12 @@ var redis = require("./redis");
 
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;
-var CHAT_DB_NUMBER  = 6;
+var CHAT_DB_NUMBER  = 7;
 var ROOM = "room:1";
 
-var rclient = new redis.create_client();
-rclient.select(CHAT_DB_NUMBER);
+var rclient = new redis.Redis(function(r) {
+    r.select(CHAT_DB_NUMBER);
+    });
 
 var channel = new function () {
   var callbacks = [];
@@ -27,9 +28,7 @@ var channel = new function () {
     switch (type) {
       case "msg":
         sys.puts("<" + nick + "> " + text);
-        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + text, function(reply) {
-          sys.debug('writing message was: ' + reply);    
-        });
+        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + text);
         break;
       case "join":
         rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + 'joined');
@@ -48,7 +47,7 @@ var channel = new function () {
   };
 
   this.query = function (since, callback) {
-    rclient.lrange(ROOM, 0, -1, function(values) {
+    rclient.lrange(ROOM, 0, -1).addCallback( function(values) {
       var matching = [];
       if (values) {
         for(var i = 0; i < values.length; i++) {
