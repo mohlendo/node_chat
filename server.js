@@ -210,7 +210,7 @@ fu.get("/recv", function (req, res) {
 });
 
 var commands = {
-  "join": function(session, arg) { session.switchTo(arg); },
+  "join": function(session, args) { session.switchTo(args[0]); },
   "leave": function(session) { session.switchTo(DEFAULT_CHANNEL); }
 };
  
