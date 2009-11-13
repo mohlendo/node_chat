@@ -19,48 +19,35 @@ var rclient = new redis.Redis(function(r) {
 var channel = new function () {
   var callbacks = [];
   this.appendMessage = function (nick, type, text) {
-    var m = { nick: nick
-            , type: type // "msg", "join", "part"
-            , text: text
-            , timestamp: (new Date()).getTime()
-            };
+    rclient.llen(ROOM).addCallback(function (value) { 
+        sys.debug("next index " + value);
+        var m = { index: value
+        , nick: nick
+        , type: type // "msg", "join", "part"
+        , text: text
+        , timestamp: (new Date()).getTime()
+        };
+        rclient.rpush(ROOM, JSON.stringify(m));
 
-    switch (type) {
-      case "msg":
-        sys.puts("<" + nick + "> " + text);
-        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + text);
-        break;
-      case "join":
-        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + 'joined');
-        sys.puts(nick + " join");
-        break;
-      case "part":
-        sys.puts(nick + " part");
-        rclient.rpush(ROOM, m.timestamp + '|' + nick + '|' + 'parted');
-        break;
-    }
-
-    while (callbacks.length > 0) {
-      callbacks.shift().callback([m]);
-    }
-
+        while (callbacks.length > 0) {
+          callbacks.shift().callback([m]);
+        }
+    });
   };
 
   this.query = function (since, callback) {
-    rclient.lrange(ROOM, 0, -1).addCallback( function(values) {
-      var matching = [];
-      if (values) {
-        for(var i = 0; i < values.length; i++) {
-          var message = values[i].split('|');
-          if (message[0] > since) {
-            matching.push({timestamp: message[0],
-                          nick: message[1],
-                          text: message[2]});
+    rclient.llen(ROOM).addCallback( function(value) { 
+      if(since < value-1) {
+        rclient.lrange(ROOM, since, -1).addCallback( function(values) {
+          var matching = [];
+          if (values) {
+            for(var i = 0; i < values.length; i++) {
+              var message = JSON.parse(values[i]);
+              matching.push(message);
+            }
           }
-        }
-      }
-      if (matching.length != 0) {
-        callback(matching);
+          callback(matching);
+        });
       } else {
         callbacks.push({ timestamp: new Date(), callback: callback });
       }
@@ -100,7 +87,7 @@ function createSession (nick) {
     },
 
     destroy: function () {
-      channel.appendMessage(session.nick, "part");
+      channel.appendMessage(session.nick, "part", session.nick + " parted");
       delete sessions[session.id];
     }
   };
@@ -154,7 +141,7 @@ fu.get("/join", function (req, res) {
 
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
-  channel.appendMessage(session.nick, "join");
+  channel.appendMessage(session.nick, "join", session.nick + " joined");
   res.simpleJSON(200, { id: session.id, nick: session.nick});
 });
 
@@ -181,7 +168,6 @@ fu.get("/recv", function (req, res) {
   }
 
   var since = parseInt(req.uri.params.since, 10);
-
   channel.query(since, function (messages) {
     if (session) session.poke();
     res.simpleJSON(200, { messages: messages });

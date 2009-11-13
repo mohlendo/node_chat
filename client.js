@@ -1,7 +1,7 @@
 var CONFIG = { debug: false
              , nick: "#"   // set in onConnect
              , id: null    // set in onConnect
-             , last_message_time: 0
+             , last_message_index: 0 
              };
 
 var nicks = [];
@@ -121,8 +121,8 @@ function longPoll (data) {
     for (var i = 0; i < data.messages.length; i++) {
       var message = data.messages[i];
 
-      if (message.timestamp > CONFIG.last_message_time)
-        CONFIG.last_message_time = message.timestamp;
+      if (message.index > CONFIG.last_message_index)
+        CONFIG.last_message_index = message.index;
 
       switch (message.type) {
         case "msg":
@@ -148,7 +148,7 @@ function longPoll (data) {
          , type: "GET"
          , url: "/recv"
          , dataType: "json"
-         , data: { since: CONFIG.last_message_time, id: CONFIG.id }
+         , data: { since: CONFIG.last_message_index, id: CONFIG.id }
          , error: function () {
              addMessage("", "long poll error. trying again...", new Date(), "error");
              transmission_errors += 1;
