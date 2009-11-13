@@ -69,7 +69,16 @@ a:hover { text-decoration: underline; color: #aaa; }
   padding-bottom: 5.1em; 
   background: inherit;
   overflow: hidden;
+  float: left;
+  width: 75%;
 }
+
+#users {
+  width: 25%;
+  margin-left: 75%;
+  position: fixed;
+}
+  
 
 /* not very important info */
 .notice td, .join td, .part td, .message .date { color: #555; }
