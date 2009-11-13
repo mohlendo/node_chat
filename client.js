@@ -13,8 +13,8 @@ function updateUsersLink ( ) {
   $("#usersLink").text(t);
 }
 
-function userJoin(nick, timestamp) {
-  addMessage(nick, "joined", timestamp, "join");
+function userJoin(nick, timestamp, text) {
+  addMessage(nick, text || "joined", timestamp, "join");
   for (var i = 0; i < nicks.length; i++)
     if (nicks[i] == nick) return;
   nicks.push(nick);
@@ -31,8 +31,8 @@ function updateUsersDisplay() {
   $("#users ul").replaceWith(newList);
 }
 
-function userPart(nick, timestamp) {
-  addMessage(nick, "left", timestamp, "part");
+function userPart(nick, timestamp, text) {
+  addMessage(nick, text || "left", timestamp, "part");
   for (var i = 0; i < nicks.length; i++) {
     if (nicks[i] == nick) {
       nicks.splice(i,1)
@@ -141,11 +141,11 @@ function longPoll (data) {
           break;
 
         case "join":
-          userJoin(message.nick, message.timestamp);
+          userJoin(message.nick, message.timestamp, message.text);
           break;
 
         case "part":
-          userPart(message.nick, message.timestamp);
+          userPart(message.nick, message.timestamp, message.text);
           break;
       }
     }

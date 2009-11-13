@@ -26,13 +26,13 @@ function createChannel(name) {
     this.name = name;
 
     this.join = function (session, text) {
-      sys.puts("channel.join(" + session.nick + ")");
+      sys.puts("channel.join(" + session.nick + ", " + this.name + ")");
       members[session] = { timestamp: new Date(), session: session };
       this.appendMessage(session.nick, "join", text);
     }
 
     this.leave = function (session, text) {
-      sys.puts("channel.leave(" + session.nick + ")");
+      sys.puts("channel.leave(" + session.nick + ", " + this.name + ")");
       this.appendMessage(session.nick, "part", text)
       delete members[session];
     }
@@ -134,9 +134,11 @@ function createSession (nick) {
 
     switchTo: function (channelName) {
       if (session.channel.name !== channelName) {
-        session.channel.leave(session);
+        session.channel.leave(session, "left " + session.channel.name);
+        sys.puts("channel is " + session.channel.name + " before switch");
         session.channel = channels[channelName] || createChannel(channelName);
-        session.channel.join(session);
+        sys.puts("channel is " + session.channel.name + " after switch");
+        session.channel.join(session, "enters " + session.channel.name);
       }
     },
 
