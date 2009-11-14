@@ -212,6 +212,10 @@ function onConnect (session) {
   CONFIG.nick = session.nick;
   CONFIG.id   = session.id;
 
+  transmission_errors = 0;
+  first_poll = true;
+  longPoll();
+
   showChat(CONFIG.nick);
 }
 
@@ -285,8 +289,6 @@ $(document).ready(function() {
 
   // remove fixtures
   $("#log table").remove();
-
-  longPoll();
 
   showConnect();
 });

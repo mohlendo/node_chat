@@ -20,7 +20,6 @@ var channels = {};
 
 function createChannel(name) {
   var channel = new function () {
-    var callbacks = [];
     var members = {};
     var nMembers = 0;
 
@@ -71,10 +70,6 @@ function createChannel(name) {
             if (!members.hasOwnProperty(sessionId)) continue;
             members[sessionId].session.deliver([m]);
           }
-
-          while (callbacks.length > 0) {
-            callbacks.shift().callback([m]);
-          }
       });
     };
 
@@ -93,31 +88,9 @@ function createChannel(name) {
           });
         } else {
           callback([]);
-          // callbacks.push({ timestamp: new Date(), callback: callback });
         }
       });
     };
-
-    this.nicks = function () {
-      var nicks = [];
-      for (var id in sessions) {
-        if (!sessions.hasOwnProperty(id)) continue;
-        var session = sessions[id];
-        if (this === session.channel) {
-          nicks.push(session.nick);
-        }
-      }
-      return nicks;
-    }
-
-    // clear old callbacks
-    // they can hang around for at most 30 seconds.
-    setInterval(function () {
-      var now = new Date();
-      while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000) {
-        callbacks.shift().callback([]);
-      }
-    }, 1000);
   };
 
   channels[name] = channel;
@@ -257,7 +230,7 @@ fu.get("/join", function (req, res) {
 
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
-  res.simpleJSON(200, { id: session.id, nick: session.nick, channel: session.channel.name, nicks: session.channel.nicks() });
+  res.simpleJSON(200, { id: session.id, nick: session.nick, channel: session.channel.name, nicks: session.channel.getMembers() });
 });
 
 fu.get("/part", function (req, res) {
@@ -280,16 +253,10 @@ fu.get("/recv", function (req, res) {
   if (id && sessions[id]) {
     session = sessions[id];
     session.poke();
-  }
 
-  var since = parseInt(req.uri.params.since, 10);
-  if (session) {
+    var since = parseInt(req.uri.params.since, 10);
     session.query(since, function(messages) {
       session.poke();
-      res.simpleJSON(200, { messages: messages });
-    });
-  } else {
-    channels[DEFAULT_CHANNEL].query(since, function(messages) {
       res.simpleJSON(200, { messages: messages });
     });
   }
@@ -353,7 +320,7 @@ fu.get("/send", function (req, res) {
     if (command) {
       command(session, match[2] ? match[2].split(/\s/) : []);
       response["channel"] = session.channel.name;
-      response["nicks"] = session.channel.nicks();
+      response["nicks"] = session.channel.getMembers();
     }
   } else {
     session.channel.appendMessage(session.nick, "msg", text);
