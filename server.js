@@ -266,6 +266,7 @@ var commands = {
   "join": function(session, args) { session.switchTo(args[0]); },
   "leave": function(session) { session.switchTo(DEFAULT_CHANNEL); },
   "whoami": function(session) { session.sendSystemMessage("You are " + session.nick); },
+  "where": function(session) { session.sendSystemMessage("You are in channel '" + session.channel.name + "'."); },
   "channels": function(session) {
     var names  = [];
     for (var name in channels) {
