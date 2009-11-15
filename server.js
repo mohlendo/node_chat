@@ -14,8 +14,8 @@ var CHAT_DB_NUMBER  = 7;
 var DEFAULT_CHANNEL = "default";
 
 var rclient = new redis.Redis(function(r) {
-    r.select(CHAT_DB_NUMBER);
-    });
+  r.select(CHAT_DB_NUMBER);
+});
 
 var channels = {};
 
@@ -59,18 +59,18 @@ function createChannel(name) {
 
     this.appendMessage = function (nick, type, text) {
       rclient.llen(name).addCallback(function (value) { 
-          var m = { index: value
+        var m = { index: value
           , nick: nick
           , type: type // "msg", "join", "part"
           , text: text
           , timestamp: (new Date()).getTime()
-          };
-          rclient.rpush(name, JSON.stringify(m));
+        };
+        rclient.rpush(name, JSON.stringify(m));
 
-          for (var sessionId in members) {
-            if (!members.hasOwnProperty(sessionId)) continue;
-            members[sessionId].session.deliver([m]);
-          }
+        for (var sessionId in members) {
+          if (!members.hasOwnProperty(sessionId)) continue;
+          members[sessionId].session.deliver([m]);
+        }
       });
     };
 
@@ -173,7 +173,7 @@ function createSession (nick) {
         text: text,
         timestamp: (new Date()).getTime()
       };
-      
+
       if (this.callback) {
         this.deliver([message]);
       } else {
