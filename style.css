@@ -74,8 +74,11 @@ a:hover { text-decoration: underline; color: #aaa; }
 }
 
 #users {
-  width: 25%;
-  margin-left: 75%;
+  background: #733;
+  margin-top: 1em;
+  padding: 0em;
+  width: 15%;
+  margin-left: 80%;
   position: fixed;
 }
   
