@@ -8,7 +8,8 @@ var http = require("http");
 var redis = require("./redis");
 
 var MESSAGE_BACKLOG = 200;
-var SESSION_TIMEOUT = 60 * 1000;
+var CALLBACK_TIMEOUT = 30 * 1000;
+var SESSION_TIMEOUT = 2 * CALLBACK_TIMEOUT;
 var CHAT_DB_NUMBER  = 7;
 var DEFAULT_CHANNEL = "default";
 
@@ -130,7 +131,7 @@ function createSession (nick) {
     };
 
     this.destroy = function () {
-      this.channel.leave(this, "part", this.nick + " parted");
+      this.channel.leave(this, this.nick + " parted");
       delete sessions[this.id];
     };
 
@@ -152,7 +153,7 @@ function createSession (nick) {
           if (messages.length > 0) {
             callback(messages);
           } else {
-            s.callback = callback;
+            s.callback = { timestamp: new Date(), callback: callback };
           }
         });
       }
@@ -160,7 +161,7 @@ function createSession (nick) {
 
     this.deliver = function (messages) {
       if (this.callback) {
-        this.callback(messages);
+        this.callback.callback(messages || []);
         this.callback = null;
       }
     };
@@ -179,10 +180,19 @@ function createSession (nick) {
         this.systemMessages.push(message);
       }
     };
+
+    this.validate = function() {
+      var now = new Date();
+      if (now - this.timestamp > SESSION_TIMEOUT) {
+        this.destroy();
+      } else if (this.callback && (now - this.callback.timestamp > CALLBACK_TIMEOUT)) {
+        this.deliver();
+      }
+    };
   };
 
   sessions[session.id] = session;
-  session.channel.join(session, "join", session.nick + " joined");
+  session.channel.join(session, session.nick + " joined");
   return session;
 }
 
@@ -191,11 +201,7 @@ setInterval(function () {
   var now = new Date();
   for (var id in sessions) {
     if (!sessions.hasOwnProperty(id)) continue;
-    var session = sessions[id];
-
-    if (now - session.timestamp > SESSION_TIMEOUT) {
-      session.destroy();
-    }
+    sessions[id].validate();
   }
 }, 1000);
 

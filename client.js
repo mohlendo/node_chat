@@ -18,7 +18,6 @@ function userJoin(nick, timestamp, text) {
   for (var i = 0; i < nicks.length; i++)
     if (nicks[i] == nick) return;
   nicks.push(nick);
-  updateUsersLink();
   updateUsersDisplay();
 }
 
@@ -29,6 +28,7 @@ function updateUsersDisplay() {
     newList.append("<li>" + nick + "</li>");
   }
   $("#users ul").replaceWith(newList);
+  updateUsersLink();
 }
 
 function userPart(nick, timestamp, text) {
@@ -39,7 +39,7 @@ function userPart(nick, timestamp, text) {
       break;
     }
   }
-  updateUsersLink();
+  updateUsersDisplay();
 }
 
 // utility functions
