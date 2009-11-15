@@ -298,6 +298,9 @@ var commands = {
       "You are all alone. Try /channels to find channels with someone to talk to.";
     session.sendSystemMessage(text);
   },
+  "flush": function(session) {
+    rclient.flushdb();
+  },
   "help": function(session) {
     var cmdNames = [];
     for (cmd in commands) {
