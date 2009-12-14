@@ -1,4 +1,5 @@
 var createServer = require("http").createServer;
+var process = require("posix");
 var sys = require("sys");
 DEBUG = false;
 
@@ -69,7 +70,7 @@ fu.staticHandler = function (filename) {
     }
 
     sys.puts("loading " + filename + "...");
-    var promise = process.fs.cat(filename, encoding);
+    var promise = process.cat(filename, encoding);
 
     promise.addCallback(function (data) {
       body = data;
@@ -91,7 +92,7 @@ fu.staticHandler = function (filename) {
   return function (req, res) {
     loadResponseData(function () {
       res.sendHeader(200, headers);
-      res.sendBody(body);
+      res.sendBody(body, encoding);
       res.finish();
     });
   }
