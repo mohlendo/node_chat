@@ -3,6 +3,8 @@ PORT = 8001;
 
 var fu = require("./fu");
 var sys = require("sys");
+var url = require("url");
+var qs = require("querystring");
 
 var MESSAGE_BACKLOG = 200;
 var SESSION_TIMEOUT = 60 * 1000;
@@ -129,7 +131,7 @@ fu.get("/who", function (req, res) {
 });
 
 fu.get("/join", function (req, res) {
-  var nick = req.uri.params["nick"];
+  var nick = qs.parse(url.parse(req.url).query).nick;
   if (nick == null || nick.length == 0) {
     res.simpleJSON(400, {error: "Bad nick."});
     return;
@@ -147,7 +149,7 @@ fu.get("/join", function (req, res) {
 });
 
 fu.get("/part", function (req, res) {
-  var id = req.uri.params.id;
+  var id = qs.parse(url.parse(req.url).query).id;
   var session;
   if (id && sessions[id]) {
     session = sessions[id];
@@ -157,18 +159,18 @@ fu.get("/part", function (req, res) {
 });
 
 fu.get("/recv", function (req, res) {
-  if (!req.uri.params.since) {
+  if (!qs.parse(url.parse(req.url).query).since) {
     res.simpleJSON(400, { error: "Must supply since parameter" });
     return;
   }
-  var id = req.uri.params.id;
+  var id = qs.parse(url.parse(req.url).query).id;
   var session;
   if (id && sessions[id]) {
     session = sessions[id];
     session.poke();
   }
 
-  var since = parseInt(req.uri.params.since, 10);
+  var since = parseInt(qs.parse(url.parse(req.url).query).since, 10);
 
   channel.query(since, function (messages) {
     if (session) session.poke();
@@ -177,8 +179,8 @@ fu.get("/recv", function (req, res) {
 });
 
 fu.get("/send", function (req, res) {
-  var id = req.uri.params.id;
-  var text = req.uri.params.text;
+  var id = qs.parse(url.parse(req.url).query).id;
+  var text = qs.parse(url.parse(req.url).query).text;
 
   var session = sessions[id];
   if (!session || !text) {

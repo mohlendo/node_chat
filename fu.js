@@ -1,6 +1,7 @@
 var createServer = require("http").createServer;
 var process = require("posix");
 var sys = require("sys");
+var url = require("url");
 DEBUG = false;
 
 var fu = exports;
@@ -20,10 +21,9 @@ var getMap = {};
 fu.get = function (path, handler) {
   getMap[path] = handler;
 };
-
 var server = createServer(function (req, res) {
   if (req.method === "GET" || req.method === "HEAD") {
-    var handler = getMap[req.uri.path] || notFound;
+    var handler = getMap[url.parse(req.url).pathname] || notFound;
 
     res.simpleText = function (code, body) {
       res.sendHeader(code, [ ["Content-Type", "text/plain"]
