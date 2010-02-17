@@ -1,5 +1,5 @@
 var createServer = require("http").createServer;
-var process = require("posix");
+var readFile = require("fs").readFile;
 var sys = require("sys");
 var url = require("url");
 DEBUG = false;
@@ -12,8 +12,8 @@ function notFound(req, res) {
   res.sendHeader(404, [ ["Content-Type", "text/plain"]
                       , ["Content-Length", NOT_FOUND.length]
                       ]);
-  res.sendBody(NOT_FOUND);
-  res.finish();
+  res.write(NOT_FOUND);
+  res.close();
 }
 
 var getMap = {};
@@ -29,8 +29,8 @@ var server = createServer(function (req, res) {
       res.sendHeader(code, [ ["Content-Type", "text/plain"]
                            , ["Content-Length", body.length]
                            ]);
-      res.sendBody(body);
-      res.finish();
+      res.write(body);
+      res.close();
     };
 
     res.simpleJSON = function (code, obj) {
@@ -38,8 +38,8 @@ var server = createServer(function (req, res) {
       res.sendHeader(code, [ ["Content-Type", "text/json"]
                            , ["Content-Length", body.length]
                            ]);
-      res.sendBody(body);
-      res.finish();
+      res.write(body);
+      res.close();
     };
 
     handler(req, res);
@@ -70,7 +70,7 @@ fu.staticHandler = function (filename) {
     }
 
     sys.puts("loading " + filename + "...");
-    var promise = process.cat(filename, encoding);
+    var promise = readFile(filename, encoding);
 
     promise.addCallback(function (data) {
       body = data;
@@ -92,8 +92,8 @@ fu.staticHandler = function (filename) {
   return function (req, res) {
     loadResponseData(function () {
       res.sendHeader(200, headers);
-      res.sendBody(body, encoding);
-      res.finish();
+      res.write(body, encoding);
+      res.close();
     });
   }
 };
