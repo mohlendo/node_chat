@@ -38,6 +38,7 @@ util = {
 
   //  html sanitizer 
   toStaticHTML: function(inputHtml) {
+    inputHtml = inputHtml.toString();
     return inputHtml.replace(/&/g, "&amp;")
                     .replace(/</g, "&lt;")
                     .replace(/>/g, "&gt;");
