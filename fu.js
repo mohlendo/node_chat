@@ -70,22 +70,20 @@ fu.staticHandler = function (filename) {
     }
 
     sys.puts("loading " + filename + "...");
-    var promise = readFile(filename, encoding);
-
-    promise.addCallback(function (data) {
-      body = data;
-      headers = [ [ "Content-Type"   , content_type ]
-                , [ "Content-Length" , body.length ]
-                ];
-      if (!DEBUG)
-        headers.push(["Cache-Control", "public"]);
-       
-      sys.puts("static file " + filename + " loaded");
-      callback();
-    });
-
-    promise.addErrback(function () {
-      sys.puts("Error loading " + filename);
+    readFile(filename, encoding, function (err, data) {
+      if (err) {
+        sys.puts("Error loading " + filename);
+      } else {
+        body = data;
+        headers = [ [ "Content-Type"   , content_type ]
+                  , [ "Content-Length" , body.length ]
+                  ];
+        if (!DEBUG)
+          headers.push(["Cache-Control", "public"]);
+         
+        sys.puts("static file " + filename + " loaded");
+        callback();
+      }
     });
   }
 
