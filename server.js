@@ -1,17 +1,17 @@
 HOST = null; // localhost
 PORT = 8001;
 
-var fu = require("./fu");
-var sys = require("sys");
-var url = require("url");
-var qs = require("querystring");
+var fu = require("./fu"),
+    sys = require("sys"),
+    url = require("url"),
+    qs = require("querystring");
 
-var MESSAGE_BACKLOG = 200;
-var SESSION_TIMEOUT = 60 * 1000;
+var MESSAGE_BACKLOG = 200,
+    SESSION_TIMEOUT = 60 * 1000;
 
 var channel = new function () {
-  var messages = [];
-  var callbacks = [];
+  var messages = [],
+      callbacks = [];
 
   this.appendMessage = function (nick, type, text) {
     var m = { nick: nick
@@ -80,9 +80,7 @@ function createSession (nick) {
 
   var session = { 
     nick: nick, 
-
     id: Math.floor(Math.random()*99999999999).toString(),
-
     timestamp: new Date(),
 
     poke: function () {
