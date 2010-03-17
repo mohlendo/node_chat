@@ -2,6 +2,8 @@ var CONFIG = { debug: false
              , nick: "#"   // set in onConnect
              , id: null    // set in onConnect
              , last_message_time: 1
+             , focus: true //event listeners bound in onConnect
+             , unread: 0 //updated in the message-processing loop
              };
 
 var nicks = [];
@@ -165,6 +167,9 @@ function longPoll (data) {
       //dispatch new messages to their appropriate handlers
       switch (message.type) {
         case "msg":
+          if(!CONFIG.focus){
+            CONFIG.unread++;
+          }
           addMessage(message.nick, message.text, message.timestamp);
           break;
 
@@ -177,6 +182,9 @@ function longPoll (data) {
           break;
       }
     }
+    //update the document title to include unread message count if blurred
+    updateTitle();
+
     //only after the first request for messages do we want to show who is here
     if (first_poll) {
       first_poll = false;
@@ -243,6 +251,14 @@ function showChat (nick) {
   scrollDown();
 }
 
+//we want to show a count of unread messages when the window does not have focus
+function updateTitle(){
+  if (CONFIG.unread) {
+    document.title = "(" + CONFIG.unread.toString() + ") node chat";
+  } else {
+    document.title = "node chat";
+  }
+}
 
 //handle the server's response to our nickname and join request
 function onConnect (session) {
@@ -257,6 +273,18 @@ function onConnect (session) {
 
   //update the UI to show the chat
   showChat(CONFIG.nick);
+
+  //listen for browser events so we know to update the document title
+  $(window).bind("blur", function() {
+    CONFIG.focus = false;
+    updateTitle();
+  });
+
+  $(window).bind("focus", function() {
+    CONFIG.focus = true;
+    CONFIG.unread = 0;
+    updateTitle();
+  });
 }
 
 //add a list of present chat members to the stream
