@@ -64,7 +64,7 @@ var channel = new function () {
     while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000) {
       callbacks.shift().callback([]);
     }
-  }, 1000);
+  }, 3000);
 };
 
 var sessions = {};
