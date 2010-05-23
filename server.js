@@ -1,6 +1,16 @@
 HOST = null; // localhost
 PORT = 8001;
 
+// when the daemon started
+var starttime = (new Date()).getTime();
+
+var mem = process.memoryUsage();
+// every 10 seconds poll for the memory.
+setInterval(function () {
+  mem = process.memoryUsage();
+}, 10*1000);
+
+
 var fu = require("./fu"),
     sys = require("sys"),
     url = require("url"),
@@ -125,7 +135,9 @@ fu.get("/who", function (req, res) {
     var session = sessions[id];
     nicks.push(session.nick);
   }
-  res.simpleJSON(200, { nicks: nicks });
+  res.simpleJSON(200, { nicks: nicks
+                      , rss: mem.rss
+                      });
 });
 
 fu.get("/join", function (req, res) {
@@ -143,7 +155,11 @@ fu.get("/join", function (req, res) {
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
   channel.appendMessage(session.nick, "join");
-  res.simpleJSON(200, { id: session.id, nick: session.nick});
+  res.simpleJSON(200, { id: session.id
+                      , nick: session.nick
+                      , rss: mem.rss
+                      , starttime: starttime
+                      });
 });
 
 fu.get("/part", function (req, res) {
@@ -153,7 +169,7 @@ fu.get("/part", function (req, res) {
     session = sessions[id];
     session.destroy();
   }
-  res.simpleJSON(200, { });
+  res.simpleJSON(200, { rss: mem.rss });
 });
 
 fu.get("/recv", function (req, res) {
@@ -172,7 +188,7 @@ fu.get("/recv", function (req, res) {
 
   channel.query(since, function (messages) {
     if (session) session.poke();
-    res.simpleJSON(200, { messages: messages });
+    res.simpleJSON(200, { messages: messages, rss: mem.rss });
   });
 });
 
@@ -183,11 +199,11 @@ fu.get("/send", function (req, res) {
   var session = sessions[id];
   if (!session || !text) {
     res.simpleJSON(400, { error: "No such session id" });
-    return; 
+    return;
   }
 
   session.poke();
 
   channel.appendMessage(session.nick, "msg", text);
-  res.simpleJSON(200, {});
+  res.simpleJSON(200, { rss: mem.rss });
 });
