@@ -84,7 +84,7 @@ fu.staticHandler = function (filename) {
   return function (req, res) {
     loadResponseData(function () {
       res.writeHead(200, headers);
-      res.end(body);
+      res.end(req.method === "HEAD" ? "" : body);
     });
   }
 };
