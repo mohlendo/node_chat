@@ -32,7 +32,7 @@ var server = createServer(function (req, res) {
     };
 
     res.simpleJSON = function (code, obj) {
-      var body = JSON.stringify(obj);
+      var body = new Buffer(JSON.stringify(obj));
       res.writeHead(code, { "Content-Type": "text/json"
                           , "Content-Length": body.length
                           });
